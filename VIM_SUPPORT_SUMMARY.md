@@ -269,7 +269,7 @@ All criteria met:
 ---
 
 **Implementation Status**: ✅ Complete
-**Version**: 2.0.0
+**Version**: 0.0.0-rc2
 **Compatibility**: Vim 9.0+ and Neovim 0.8+
 **Release Date**: December 10, 2025
 

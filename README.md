@@ -8,6 +8,11 @@
   Bring the power of <a href="https://cursor.com">Cursor</a>'s AI capabilities directly into your Vim or Neovim workflow
 </p>
 
+> [!WARNING]
+> **⚠️ ALPHA STATUS**
+>
+> This project is in **alpha stage** and is actively being developed. You may encounter bugs, breaking changes, and incomplete features. Use at your own risk and please report any issues you find!
+
 ---
 
 ## Features

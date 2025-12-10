@@ -1,5 +1,8 @@
 # cursor.vim Quick Start Guide
 
+> [!WARNING]
+> **⚠️ ALPHA STATUS**: This project is in alpha stage and may contain bugs or incomplete features. Use at your own risk!
+
 Get up and running with cursor.vim in 5 minutes!
 
 ## Prerequisites Check

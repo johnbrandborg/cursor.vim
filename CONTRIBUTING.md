@@ -2,6 +2,8 @@
 
 Thank you for your interest in contributing to cursor.vim! This document provides guidelines and instructions for contributing.
 
+> **⚠️ Note**: cursor.vim is currently in **ALPHA** status. We welcome contributions, especially bug reports and fixes as we work toward a stable release!
+
 ## How to Contribute
 
 ### Reporting Bugs
