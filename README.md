@@ -20,6 +20,35 @@
 - **🔧 Configurable** - Extensive configuration options and key mappings
 - **🔀 Dual Support** - Works with both Vim 9.0+ and Neovim 0.8+
 
+> **Note**: cursor.vim focuses on interactive AI assistance, not inline code completion. Use it alongside [GitHub Copilot](https://github.com/github/copilot.vim) for the best development experience!
+
+## Philosophy
+
+cursor.vim is designed to **complement** inline completion tools like GitHub Copilot, not replace them.
+
+- **Use GitHub Copilot for**: Real-time code suggestions as you type
+- **Use cursor.vim for**: Interactive Q&A, learning, debugging, and applying complex changes
+
+Think of it as having both:
+- A **co-pilot** (GitHub Copilot) - suggests code while you fly ✈️
+- An **instructor** (cursor.vim) - answers questions and helps you learn 🎓
+
+### Feature Comparison
+
+| Feature | GitHub Copilot | cursor.vim |
+|---------|----------------|------------|
+| Inline code completion | ✅ | ❌ |
+| Tab suggestions while typing | ✅ | ❌ |
+| Interactive Q&A | ❌ | ✅ |
+| Multi-turn conversations | ❌ | ✅ |
+| Code explanation | Limited | ✅ |
+| Apply code with preview | ❌ | ✅ |
+| Chat history | ❌ | ✅ |
+| Ask about selections | ❌ | ✅ |
+| Works with Vim & Neovim | ✅ | ✅ |
+
+**Recommendation**: Install both! They work great together and serve different purposes.
+
 ## Prerequisites
 
 Choose one:
@@ -396,17 +425,29 @@ Contributions are welcome! Please feel free to submit issues and pull requests.
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## Comparison with copilot.vim
+## Why Use cursor.vim with GitHub Copilot?
 
-While [copilot.vim](https://github.com/github/copilot.vim) provides inline code completion, cursor.vim focuses on:
+cursor.vim and [copilot.vim](https://github.com/github/copilot.vim) serve different but complementary purposes:
 
-- **Interactive AI assistance** - Ask questions and have conversations
-- **Code application** - Apply generated code with preview and control
-- **Context awareness** - Work with selections, buffers, and chat history
-- **Cursor integration** - Leverage Cursor's advanced AI capabilities
-- **Dual editor support** - Works with both Vim 9.0+ and Neovim 0.8+
+**GitHub Copilot excels at:**
+- Inline code suggestions as you type
+- Autocomplete for repetitive patterns
+- Fast, context-aware completions
 
-Both plugins can complement each other in your workflow!
+**cursor.vim excels at:**
+- Interactive Q&A and explanations
+- Multi-turn conversations with context
+- Debugging and learning
+- Applying complex code changes with preview
+- Explicit code generation on demand
+
+**Together, they provide:**
+- 🚀 **Faster coding** - Copilot for quick completions
+- 🧠 **Better understanding** - cursor.vim for learning and debugging
+- 🎯 **More control** - cursor.vim for explicit, reviewed changes
+- 💪 **Complete workflow** - Cover all aspects of AI-assisted development
+
+Many developers use both: Copilot for day-to-day completions, and cursor.vim when they need to think through problems or learn new concepts.
 
 ## Implementation Details
 
