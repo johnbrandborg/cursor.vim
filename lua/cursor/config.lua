@@ -10,7 +10,7 @@ M.defaults = {
   model = 'claude-sonnet-4',
 
   -- Timeout for CLI operations (milliseconds)
-  timeout = 30000,
+  timeout = 60000,
 
   -- UI preferences
   ui = {

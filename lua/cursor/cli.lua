@@ -7,9 +7,46 @@ local uv = vim.loop
 -- Active processes
 M.processes = {}
 
+-- Resolved CLI command (cached after first resolution)
+local resolved_cli_cmd = nil
+
 -- Generate unique request ID
 local function gen_request_id()
   return tostring(os.time()) .. '_' .. tostring(math.random(10000, 99999))
+end
+
+-- Resolve cursor-agent to the actual node binary
+-- This improves compatibility with job/process spawning
+local function resolve_cursor_agent_command(cli_path)
+  -- Return cached result if available
+  if resolved_cli_cmd then
+    return resolved_cli_cmd.path, resolved_cli_cmd.args
+  end
+
+  -- Check if cli_path exists and is executable
+  if vim.fn.executable(cli_path) == 1 then
+    -- Try to resolve symlink
+    local resolved = vim.fn.resolve(cli_path)
+    local dir = vim.fn.fnamemodify(resolved, ':h')
+    local node_bin = dir .. '/node'
+    local index_js = dir .. '/index.js'
+
+    -- Check if node binary and index.js exist
+    if vim.fn.executable(node_bin) == 1 and vim.fn.filereadable(index_js) == 1 then
+      resolved_cli_cmd = {
+        path = node_bin,
+        args = { '--use-system-ca', index_js }
+      }
+      return resolved_cli_cmd.path, resolved_cli_cmd.args
+    end
+  end
+
+  -- Fallback to original cli_path
+  resolved_cli_cmd = {
+    path = cli_path,
+    args = {}
+  }
+  return resolved_cli_cmd.path, resolved_cli_cmd.args
 end
 
 -- Parse JSON response from CLI
@@ -37,10 +74,12 @@ function M.execute(args, callback)
   local stdout = uv.new_pipe(false)
   local stderr = uv.new_pipe(false)
 
-  local full_args = vim.list_extend({}, args)
+  -- Resolve cursor-agent to node binary for better process spawning
+  local cli_path, cli_base_args = resolve_cursor_agent_command(cfg.cli_path)
+  local full_args = vim.list_extend(vim.list_extend({}, cli_base_args), args)
 
   local handle, pid
-  handle, pid = uv.spawn(cfg.cli_path, {
+  handle, pid = uv.spawn(cli_path, {
     args = full_args,
     stdio = { nil, stdout, stderr },
   }, function(code, signal)
@@ -129,16 +168,16 @@ end
 
 -- Ask command - simple question/answer
 function M.ask(prompt, context, callback)
-  local args = {
-    'ask',
-    prompt,
-  }
-
-  -- Add context if provided (e.g., selected code)
+  -- Build full prompt with context
+  local full_prompt = prompt
   if context and context ~= '' then
-    table.insert(args, '--context')
-    table.insert(args, context)
+    full_prompt = prompt .. "\n\nContext:\n```\n" .. context .. "\n```"
   end
+
+  local args = {
+    '--print',
+    full_prompt,
+  }
 
   return M.execute(args, function(output, err)
     if err then
@@ -156,16 +195,16 @@ end
 
 -- Chat command - conversational interface
 function M.chat(message, history, callback)
-  local args = {
-    'chat',
-    message,
-  }
-
-  -- Add conversation history if provided
+  -- Build message with history context
+  local full_message = message
   if history and #history > 0 then
-    table.insert(args, '--history')
-    table.insert(args, vim.json.encode(history))
+    full_message = "Previous conversation:\n" .. vim.json.encode(history) .. "\n\n" .. message
   end
+
+  local args = {
+    '--print',
+    full_message,
+  }
 
   return M.execute(args, function(output, err)
     if err then

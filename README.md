@@ -142,8 +142,8 @@ require('cursor').setup({
   -- Default AI model
   model = 'claude-sonnet-4',
 
-  -- Timeout for CLI operations (milliseconds)
-  timeout = 30000,
+  -- Timeout for CLI operations (milliseconds, 0 to disable)
+  timeout = 60000,
 
   -- UI preferences
   ui = {
@@ -193,7 +193,7 @@ require('cursor').setup({
 let g:cursor_config = {
   \ 'cli_path': 'cursor-agent',
   \ 'model': 'claude-sonnet-4',
-  \ 'timeout': 30000,
+  \ 'timeout': 60000,
   \ 'ui': {
   \   'window_type': 'float',
   \   'float_width': 0.8,
@@ -375,11 +375,19 @@ cursor-agent auth login
 
 ### Timeout Errors
 
-Increase timeout for complex queries:
+The cursor-agent CLI can take 30-60 seconds to respond. If you get timeout errors (exit code 143), increase the timeout:
 
 ```lua
 require('cursor').setup({
-  timeout = 60000  -- 60 seconds
+  timeout = 120000  -- 2 minutes for complex queries
+})
+```
+
+Or disable timeout entirely (not recommended):
+
+```lua
+require('cursor').setup({
+  timeout = 0  -- No timeout
 })
 ```
 

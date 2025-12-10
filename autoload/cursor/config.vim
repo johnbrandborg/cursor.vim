@@ -5,7 +5,7 @@
 let s:defaults = {
   \ 'cli_path': 'cursor-agent',
   \ 'model': 'claude-sonnet-4',
-  \ 'timeout': 30000,
+  \ 'timeout': 60000,
   \ 'ui': {
   \   'window_type': 'float',
   \   'float_width': 0.8,

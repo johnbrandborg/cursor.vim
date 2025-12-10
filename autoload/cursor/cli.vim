@@ -5,10 +5,41 @@
 let s:jobs = {}
 let s:request_id_counter = 0
 
+" Resolved CLI command (cached after first resolution)
+let s:resolved_cli_cmd = v:null
+
 " Generate unique request ID
 function! s:GenRequestId() abort
   let s:request_id_counter += 1
   return 'req_' . localtime() . '_' . s:request_id_counter
+endfunction
+
+" Resolve cursor-agent to the actual node binary
+" This is needed because the bash wrapper doesn't work properly with job_start
+function! s:ResolveCursorAgentCommand(cli_path) abort
+  " Return cached result if available
+  if s:resolved_cli_cmd isnot v:null
+    return s:resolved_cli_cmd
+  endif
+
+  " Check if cli_path is the cursor-agent wrapper
+  if executable(a:cli_path)
+    " Try to resolve symlink and find the actual node binary
+    let l:resolved = resolve(a:cli_path)
+    let l:dir = fnamemodify(l:resolved, ':h')
+    let l:node_bin = l:dir . '/node'
+    let l:index_js = l:dir . '/index.js'
+
+    " Check if node binary and index.js exist
+    if executable(l:node_bin) && filereadable(l:index_js)
+      let s:resolved_cli_cmd = [l:node_bin, '--use-system-ca', l:index_js]
+      return s:resolved_cli_cmd
+    endif
+  endif
+
+  " Fallback to original cli_path
+  let s:resolved_cli_cmd = [a:cli_path]
+  return s:resolved_cli_cmd
 endfunction
 
 " Execute Cursor CLI command
@@ -19,23 +50,37 @@ function! cursor#cli#Execute(args, Callback) abort
   let l:stdout_data = []
   let l:stderr_data = []
 
-  " Build command
-  let l:cmd = [l:config.cli_path] + a:args
+  " Build command - resolve cursor-agent to node binary for better job_start compatibility
+  let l:cli_cmd = s:ResolveCursorAgentCommand(l:config.cli_path)
+  let l:cmd = l:cli_cmd + a:args
+
+  " Debug logging
+  if l:config.debug
+    echom 'cursor.vim CLI: Executing command: ' . string(l:cmd)
+  endif
 
   " Define callbacks
   let l:options = {
     \ 'out_cb': function('s:OutCallback', [l:stdout_data]),
     \ 'err_cb': function('s:ErrCallback', [l:stderr_data]),
     \ 'exit_cb': function('s:ExitCallback', [l:request_id, l:stdout_data, l:stderr_data, a:Callback]),
-    \ 'mode': 'raw',
+    \ 'mode': 'nl',
+    \ 'noblock': 1,
+    \ 'in_io': 'null',
     \ }
 
   " Start job
   let l:job = job_start(l:cmd, l:options)
 
-  if job_status(l:job) ==# 'fail'
+  let l:status = job_status(l:job)
+  if l:status ==# 'fail'
     call a:Callback(v:null, 'Failed to start Cursor CLI')
     return l:request_id
+  endif
+
+  if l:config.debug
+    echom 'cursor.vim CLI: Job started with status: ' . l:status
+    echom 'cursor.vim CLI: Job info: ' . string(job_info(l:job))
   endif
 
   " Store job info
@@ -45,12 +90,16 @@ function! cursor#cli#Execute(args, Callback) abort
     \ 'timer': v:null,
     \ }
 
-  " Setup timeout
+  " Setup timeout (only if > 0, set to 0 to disable)
   if l:config.timeout > 0
     let s:jobs[l:request_id].timer = timer_start(
       \ l:config.timeout,
       \ function('s:TimeoutCallback', [l:request_id, a:Callback])
       \ )
+  else
+    if l:config.debug
+      echom 'cursor.vim CLI: Timeout disabled'
+    endif
   endif
 
   return l:request_id
@@ -59,15 +108,31 @@ endfunction
 " Stdout callback
 function! s:OutCallback(data_list, channel, msg) abort
   call add(a:data_list, a:msg)
+  " Debug output (don't call config here as it might cause issues)
+  echom 'cursor.vim CLI: stdout chunk: ' . len(a:msg) . ' bytes'
 endfunction
 
 " Stderr callback
 function! s:ErrCallback(data_list, channel, msg) abort
   call add(a:data_list, a:msg)
+  " Debug output
+  echom 'cursor.vim CLI: stderr chunk: ' . len(a:msg) . ' bytes'
+  if len(a:msg) < 200
+    echom 'cursor.vim CLI: stderr: ' . a:msg
+  endif
 endfunction
 
 " Exit callback
 function! s:ExitCallback(request_id, stdout_data, stderr_data, Callback, job, status) abort
+  let l:config = cursor#config#Get()
+
+  " Debug logging
+  if l:config.debug
+    echom 'cursor.vim CLI: Exit callback - status: ' . a:status
+    echom 'cursor.vim CLI: stdout chunks: ' . len(a:stdout_data)
+    echom 'cursor.vim CLI: stderr chunks: ' . len(a:stderr_data)
+  endif
+
   " Cancel timeout timer
   if has_key(s:jobs, a:request_id) && s:jobs[a:request_id].timer isnot v:null
     call timer_stop(s:jobs[a:request_id].timer)
@@ -84,12 +149,21 @@ function! s:ExitCallback(request_id, stdout_data, stderr_data, Callback, job, st
     if empty(l:error_msg)
       let l:error_msg = 'Process exited with code ' . a:status
     endif
+    if l:config.debug
+      echom 'cursor.vim CLI: Error: ' . l:error_msg
+    endif
     call a:Callback(v:null, l:error_msg)
     return
   endif
 
   " Return stdout data
   let l:output = join(a:stdout_data, '')
+  if l:config.debug
+    echom 'cursor.vim CLI: Output length: ' . len(l:output)
+    if len(l:output) > 0
+      echom 'cursor.vim CLI: First 100 chars: ' . l:output[:100]
+    endif
+  endif
   call a:Callback(l:output, v:null)
 endfunction
 
@@ -99,7 +173,13 @@ function! s:TimeoutCallback(request_id, Callback, timer_id) abort
     return
   endif
 
+  let l:config = cursor#config#Get()
   let l:job = s:jobs[a:request_id].job
+
+  " Debug logging
+  if l:config.debug
+    echom 'cursor.vim CLI: Request timed out after ' . l:config.timeout . 'ms'
+  endif
 
   " Stop the job
   call job_stop(l:job, 'term')
@@ -108,30 +188,31 @@ function! s:TimeoutCallback(request_id, Callback, timer_id) abort
   unlet s:jobs[a:request_id]
 
   " Call callback with timeout error
-  let l:config = cursor#config#Get()
   call a:Callback(v:null, 'Request timed out after ' . l:config.timeout . 'ms')
 endfunction
 
 " Ask command - simple question/answer
 function! cursor#cli#Ask(prompt, context, Callback) abort
-  let l:args = ['ask', a:prompt]
-
-  " Add context if provided
+  " Build full prompt with context
+  let l:full_prompt = a:prompt
   if !empty(a:context)
-    let l:args += ['--context', a:context]
+    let l:full_prompt = a:prompt . "\n\nContext:\n```\n" . a:context . "\n```"
   endif
+
+  let l:args = ['--print', l:full_prompt]
 
   return cursor#cli#Execute(l:args, a:Callback)
 endfunction
 
 " Chat command - conversational interface
 function! cursor#cli#Chat(message, history, Callback) abort
-  let l:args = ['chat', a:message]
-
-  " Add conversation history if provided
+  " Build message with history context
+  let l:full_message = a:message
   if !empty(a:history)
-    let l:args += ['--history', json_encode(a:history)]
+    let l:full_message = "Previous conversation:\n" . json_encode(a:history) . "\n\n" . a:message
   endif
+
+  let l:args = ['--print', l:full_message]
 
   return cursor#cli#Execute(l:args, a:Callback)
 endfunction
