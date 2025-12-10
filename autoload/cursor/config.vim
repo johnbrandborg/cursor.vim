@@ -3,7 +3,7 @@
 
 " Default configuration
 let s:defaults = {
-  \ 'cli_path': 'cursor',
+  \ 'cli_path': 'cursor-agent',
   \ 'model': 'claude-sonnet-4',
   \ 'timeout': 30000,
   \ 'ui': {

@@ -56,8 +56,8 @@ Choose one:
 - **Vim 9.0+** - Modern Vim with job control and popup windows
 
 Both require:
-- **Cursor CLI** - [Cursor Agent CLI](https://cursor.com/cli) installed and authenticated
-- **Node.js** - Required by Cursor CLI
+- **Cursor Agent CLI** - [Cursor Agent CLI](https://cursor.com/cli) installed and authenticated (`cursor-agent` command)
+- **Node.js** - Required by Cursor Agent CLI
 
 ## Installation
 
@@ -106,7 +106,7 @@ git clone --depth=1 https://github.com/johnbrandborg/cursor.vim.git \
 ## Quick Start
 
 1. Install the plugin using your preferred method
-2. Install and authenticate with [Cursor CLI](https://cursor.com/cli)
+2. Install and authenticate with [Cursor Agent CLI](https://cursor.com/cli) - the command is `cursor-agent`
 3. Open Vim or Neovim and run `:CursorSetup` to verify installation
 4. Start using cursor.vim!
 
@@ -132,7 +132,7 @@ cursor.vim comes with sensible defaults, but you can customize it to your liking
 ```lua
 require('cursor').setup({
   -- Path to cursor CLI executable
-  cli_path = 'cursor',
+  cli_path = 'cursor-agent',
 
   -- Default AI model
   model = 'claude-sonnet-4',
@@ -186,7 +186,7 @@ require('cursor').setup({
 ```vim
 " Set configuration before plugin loads
 let g:cursor_config = {
-  \ 'cli_path': 'cursor',
+  \ 'cli_path': 'cursor-agent',
   \ 'model': 'claude-sonnet-4',
   \ 'timeout': 30000,
   \ 'ui': {
@@ -356,16 +356,16 @@ Check plugin status and configuration.
 
 " If not, set custom path in config:
 require('cursor').setup({
-  cli_path = '/path/to/cursor'
+  cli_path = '/path/to/cursor-agent'
 })
 ```
 
 ### Authentication Issues
 
-Ensure Cursor CLI is authenticated:
+Ensure Cursor Agent CLI is authenticated:
 
 ```bash
-cursor auth login
+cursor-agent auth login
 ```
 
 ### Timeout Errors

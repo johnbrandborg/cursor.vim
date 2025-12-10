@@ -10,8 +10,8 @@ Before installing, ensure you have:
 # Check Neovim version (need 0.8+)
 nvim --version
 
-# Check if Cursor CLI is installed
-which cursor
+# Check if Cursor Agent CLI is installed
+which cursor-agent
 
 # If not installed, visit: https://cursor.com/cli
 ```
@@ -67,7 +67,7 @@ git clone https://github.com/johnbrandborg/cursor.vim.git \
 3. **If CLI not found**, configure the path:
    ```lua
    require('cursor').setup({
-     cli_path = '/path/to/cursor'
+     cli_path = '/path/to/cursor-agent'
    })
    ```
 
@@ -213,18 +213,18 @@ require('cursor').setup({
 ### "Cursor CLI not found"
 
 ```bash
-# Find where cursor is installed
-which cursor
+# Find where cursor-agent is installed
+which cursor-agent
 
 # Then configure the path
-lua require('cursor').setup({ cli_path = '/usr/local/bin/cursor' })
+lua require('cursor').setup({ cli_path = '/usr/local/bin/cursor-agent' })
 ```
 
 ### "Authentication error"
 
 ```bash
-# Authenticate with Cursor CLI
-cursor auth login
+# Authenticate with Cursor Agent CLI
+cursor-agent auth login
 ```
 
 ### Timeout errors

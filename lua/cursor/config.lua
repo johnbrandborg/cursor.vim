@@ -4,7 +4,7 @@ local M = {}
 -- Default configuration
 M.defaults = {
   -- Path to cursor CLI executable
-  cli_path = 'cursor',
+  cli_path = 'cursor-agent',
 
   -- Default model to use
   model = 'claude-sonnet-4',
