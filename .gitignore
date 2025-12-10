@@ -1,0 +1,24 @@
+# Vim
+*.swp
+*.swo
+*~
+.*.swp
+.*.swo
+
+# Neovim
+*.un~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test files
+test/
+tests/
+
+# Build artifacts
+*.log
+
+# User data
+chat_history/
+

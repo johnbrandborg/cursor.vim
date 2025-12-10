@@ -1,0 +1,416 @@
+*cursor.txt*  Cursor AI Integration for Vim and Neovim
+
+Author: John Brandborg
+License: MIT
+Version: 2.0.0
+
+==============================================================================
+CONTENTS                                                      *cursor-contents*
+
+    1. Introduction ............................. |cursor-introduction|
+    2. Requirements ............................. |cursor-requirements|
+    3. Installation ............................. |cursor-installation|
+    4. Configuration ............................ |cursor-configuration|
+    5. Commands ................................. |cursor-commands|
+    6. Mappings ................................. |cursor-mappings|
+    7. Functions ................................ |cursor-functions|
+    8. Examples ................................. |cursor-examples|
+    9. Troubleshooting .......................... |cursor-troubleshooting|
+   10. About .................................... |cursor-about|
+
+==============================================================================
+1. INTRODUCTION                                           *cursor-introduction*
+
+cursor.vim brings Cursor's powerful AI capabilities directly into Vim and
+Neovim, enabling you to ask questions, chat with AI, and apply code
+suggestions seamlessly within your editing workflow.
+
+The plugin automatically detects your editor and loads the appropriate
+implementation:
+  • Neovim 0.8+: Lua-based implementation
+  • Vim 9.0+: Vimscript-based implementation
+
+Both implementations provide identical features and commands.
+
+Features:
+  • Ask - Get instant AI-powered answers to coding questions
+  • Chat - Interactive conversational interface with history
+  • Apply - Apply AI-generated code to your buffers
+  • Modern UI - Beautiful floating windows and splits
+  • Async - Non-blocking operations
+  • Configurable - Extensive customization options
+
+==============================================================================
+2. REQUIREMENTS                                           *cursor-requirements*
+
+cursor.vim requires one of:
+
+  • Neovim 0.8 or later, OR
+  • Vim 9.0 or later
+
+And both require:
+
+  • Cursor CLI installed and authenticated
+  • Node.js (required by Cursor CLI)
+
+To install Cursor CLI, visit: https://cursor.com/cli
+
+To authenticate:
+>
+    cursor auth login
+<
+
+==============================================================================
+3. INSTALLATION                                           *cursor-installation*
+
+Using vim-plug: >
+    Plug 'johnbrandborg/cursor.vim'
+<
+
+Using lazy.nvim: >
+    {
+      'johnbrandborg/cursor.vim',
+      config = function()
+        require('cursor').setup()
+      end
+    }
+<
+
+Manual installation (Neovim): >
+    git clone --depth=1 https://github.com/johnbrandborg/cursor.vim.git \
+      ~/.config/nvim/pack/cursor/start/cursor.vim
+<
+
+Manual installation (Vim): >
+    git clone --depth=1 https://github.com/johnbrandborg/cursor.vim.git \
+      ~/.vim/pack/cursor/start/cursor.vim
+<
+
+==============================================================================
+4. CONFIGURATION                                         *cursor-configuration*
+
+                                                               *cursor.setup()*
+cursor.setup({config})                                  *cursor.setup()*
+
+    Configure cursor.vim with custom options. Called automatically with
+    defaults if not explicitly called.
+
+    For Neovim (Lua), use require('cursor').setup({})
+    For Vim, use g:cursor_config dictionary variable
+
+    Neovim configuration: >
+
+    require('cursor').setup({
+      -- Path to cursor CLI executable
+      cli_path = 'cursor',
+
+      -- Default AI model
+      model = 'claude-sonnet-4',
+
+      -- Timeout for CLI operations (milliseconds)
+      timeout = 30000,
+
+      -- UI preferences
+      ui = {
+        -- Window type: 'float', 'split', 'vsplit'
+        window_type = 'float',
+
+        -- Floating window dimensions (percentage)
+        float_width = 0.8,
+        float_height = 0.8,
+
+        -- Split size (lines/columns)
+        split_size = 15,
+
+        -- Border style
+        border = 'rounded',
+      },
+
+      -- Chat preferences
+      chat = {
+        -- Save chat history
+        save_history = true,
+
+        -- Maximum context messages
+        max_context = 20,
+
+        -- History directory
+        history_dir = vim.fn.stdpath('data') .. '/cursor_chat_history',
+      },
+
+      -- Key mappings
+      mappings = {
+        ask = '<leader>ca',
+        chat = '<leader>cc',
+        apply = '<leader>cy',
+        status = '<leader>cs',
+      },
+
+      -- Debug mode
+      debug = false,
+    })
+<
+
+    Vim configuration (Vimscript): >
+
+    let g:cursor_config = {
+      \ 'cli_path': 'cursor',
+      \ 'model': 'claude-sonnet-4',
+      \ 'timeout': 30000,
+      \ 'ui': {
+      \   'window_type': 'float',
+      \   'float_width': 0.8,
+      \   'float_height': 0.8,
+      \   'split_size': 15,
+      \   'border': 'rounded',
+      \ },
+      \ 'chat': {
+      \   'save_history': v:true,
+      \   'max_context': 20,
+      \ },
+      \ 'debug': v:false,
+      \ }
+<
+
+                                                *g:cursor_no_default_mappings*
+
+Set this variable to disable default key mappings (works for both): >
+    let g:cursor_no_default_mappings = 1
+<
+
+==============================================================================
+5. COMMANDS                                                   *cursor-commands*
+
+:CursorSetup                                                    *:CursorSetup*
+    Initialize cursor.vim plugin. Called automatically on VimEnter.
+
+:CursorStatus                                                  *:CursorStatus*
+    Display plugin status, configuration, and CLI availability.
+
+:CursorAsk {question}                                             *:CursorAsk*
+    Ask a question and receive AI-powered answer.
+    Example: >
+        :CursorAsk How do I reverse a list in Python?
+<
+
+:CursorAskInteractive                                  *:CursorAskInteractive*
+    Prompt for a question and display AI response.
+
+:CursorAskVisual [{question}]                              *:CursorAskVisual*
+    Ask about visually selected code. Optionally provide question,
+    otherwise you'll be prompted.
+
+:CursorAskBuffer [{question}]                              *:CursorAskBuffer*
+    Ask about current buffer content. Optionally provide question,
+    otherwise you'll be prompted.
+
+:CursorChat                                                      *:CursorChat*
+    Open interactive chat interface with Cursor AI.
+
+    In chat window:
+      <CR> (Insert mode) - Send message
+      q (Normal mode)    - Close chat
+      <leader>cc         - Clear history
+
+:CursorChatClear                                            *:CursorChatClear*
+    Clear current chat history.
+
+:CursorChatSave [{filename}]                                *:CursorChatSave*
+    Save current chat history to file. If no filename provided,
+    generates timestamp-based filename.
+
+:CursorChatLoad {filepath}                                  *:CursorChatLoad*
+    Load chat history from file.
+
+:CursorChatClose                                            *:CursorChatClose*
+    Close chat window without clearing history.
+
+:CursorApply                                                    *:CursorApply*
+    Apply code from last AI response to current buffer.
+    You'll be prompted to choose application mode:
+      • Replace entire buffer
+      • Append to end
+      • Insert at cursor
+
+:CursorApplyNew                                              *:CursorApplyNew*
+    Apply code from last response to a new buffer.
+
+:CursorPreview                                                *:CursorPreview*
+    Preview code blocks from last AI response without applying.
+
+==============================================================================
+6. MAPPINGS                                                   *cursor-mappings*
+
+Default key mappings (can be customized or disabled):
+
+Normal mode:
+    <leader>ca          Ask (interactive prompt)
+    <leader>cc          Open chat
+    <leader>cy          Apply last response
+    <leader>cs          Show status
+
+Visual mode:
+    <leader>ca          Ask about selection
+
+Chat window:
+    <CR> (Insert)       Send message
+    q (Normal)          Close chat
+
+==============================================================================
+7. FUNCTIONS                                                 *cursor-functions*
+
+Lua API functions for advanced usage:
+
+require('cursor').setup({config})                                      *setup*
+    Initialize plugin with configuration.
+
+require('cursor').status()                                            *status*
+    Get plugin status and display information.
+
+require('cursor.ask').ask(prompt, {opts})                               *ask*
+    Ask a question programmatically.
+    Options:
+      • context - Additional context string
+      • use_selection - Use visual selection as context
+      • copy_to_clipboard - Copy response to clipboard
+
+require('cursor.ask').ask_visual(prompt)                         *ask_visual*
+    Ask about visual selection.
+
+require('cursor.ask').ask_buffer(prompt)                         *ask_buffer*
+    Ask about current buffer.
+
+require('cursor.chat').open_chat()                                *open_chat*
+    Open chat interface.
+
+require('cursor.chat').clear_history()                        *clear_history*
+    Clear chat history.
+
+require('cursor.chat').save_history(filename)                 *save_history*
+    Save chat history to file.
+
+require('cursor.chat').load_history(filepath)                 *load_history*
+    Load chat history from file.
+
+require('cursor.apply').apply_last({opts})                        *apply_last*
+    Apply last response to buffer.
+    Options:
+      • buffer - Target buffer (default: current)
+      • mode - 'replace', 'append', or 'insert'
+      • preview - Show preview first (default: true)
+
+require('cursor.apply').apply_to_new_buffer(block)      *apply_to_new_buffer*
+    Apply code block to new buffer.
+
+require('cursor.apply').preview_last()                          *preview_last*
+    Preview code blocks without applying.
+
+==============================================================================
+8. EXAMPLES                                                   *cursor-examples*
+
+Example 1: Quick question ~
+>
+    :CursorAsk What's the difference between map and filter in Python?
+<
+
+Example 2: Refactor code ~
+>
+    1. Select code in visual mode (v or V)
+    2. Press <leader>ca
+    3. Type: "Refactor this to be more Pythonic"
+    4. Review response
+    5. Press <leader>cy to apply
+<
+
+Example 3: Debug assistance ~
+>
+    1. Select buggy code
+    2. :CursorAskVisual Why isn't this working?
+    3. Review explanation
+    4. :CursorChat (for follow-up questions)
+<
+
+Example 4: Learn new concepts ~
+>
+    :CursorAsk Explain Rust ownership with examples
+
+    " Or start a conversation
+    :CursorChat
+    " Then type: "I'm learning Rust, explain ownership"
+<
+
+Example 5: Programmatic usage ~
+>
+    lua << EOF
+    local cursor = require('cursor')
+    local ask = require('cursor.ask')
+
+    -- Setup with custom config
+    cursor.setup({
+      timeout = 60000,
+      ui = { window_type = 'split' }
+    })
+
+    -- Ask programmatically
+    ask.ask("Generate a fibonacci function", {
+      copy_to_clipboard = true
+    })
+    EOF
+<
+
+==============================================================================
+9. TROUBLESHOOTING                                   *cursor-troubleshooting*
+
+Problem: "Cursor CLI not found" ~
+
+Solution: Ensure Cursor CLI is installed and in PATH: >
+    which cursor
+
+    " If not found, set custom path:
+    lua require('cursor').setup({ cli_path = '/path/to/cursor' })
+<
+
+Problem: Authentication errors ~
+
+Solution: Authenticate with Cursor CLI: >
+    cursor auth login
+<
+
+Problem: Timeout errors ~
+
+Solution: Increase timeout for complex queries: >
+    lua require('cursor').setup({ timeout = 60000 })
+<
+
+Problem: UI issues ~
+
+Solution: Try different window type: >
+    lua require('cursor').setup({ ui = { window_type = 'split' } })
+<
+
+Problem: Debug issues ~
+
+Solution: Enable debug mode: >
+    lua require('cursor').setup({ debug = true })
+<
+
+Check status: >
+    :CursorStatus
+<
+
+==============================================================================
+10. ABOUT                                                       *cursor-about*
+
+Find the latest version and report issues at:
+    https://github.com/johnbrandborg/cursor.vim
+
+Related projects:
+    • Cursor: https://cursor.com
+    • Cursor CLI: https://cursor.com/cli
+    • copilot.vim: https://github.com/github/copilot.vim
+
+License: MIT
+
+==============================================================================
+vim:tw=78:ts=8:ft=help:norl:
+
